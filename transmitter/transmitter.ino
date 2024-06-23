@@ -10,21 +10,21 @@ Part of the degree project for a BSc in mechatronis spring 2024.
 #include <nRF24L01.h>
 #include <RF24.h>
 
-RF24 radio(7, 8); // CE, CSN pins UNO
-//RF24 radio(48, 49); // CE, CSN pins MEGA
-const byte address[6] = "00001";
+RF24 radio(7, 8); // CE, CSN pins
+const byte address[6] = "00003";
 
 // Joystick Pins
-const byte JOYXPIN = A0;
-const byte JOYYPIN = A1;
-const byte JOYBTNPIN = 4;
-const byte OVRBTNPIN = 2;
+const int JOYXPIN = A0;
+const int JOYYPIN = A1;
+const int JOYBTNPIN = 4;
+const int OVRBTNPIN = 2;
 
-const byte OVRLED = 5;
-const byte JOYLED = 6;
+int OVRLED = 5;
+int JOYLED = 6;
 
-bool ovrTgl = 0;
-bool joyTgl = 0;
+bool ovrTgl = false; //Toggle for the manual override mode
+bool joyTgl = false; //Toggle for joystick button
+
 void setup() {
   Serial.begin(9600);
   radio.begin();
@@ -37,49 +37,37 @@ void setup() {
 }
 
 void loop() {
+
   int joyx = analogRead(JOYXPIN);
   int joyy = analogRead(JOYYPIN);
-  if (!digitalRead(JOYBTNPIN)){ //Inverted due to pullup resistor.
-    
-    joyTgl = !joyTgl;
-    delay(80);
-  }
-    if (!digitalRead(OVRBTNPIN)){
-    
-    ovrTgl = !ovrTgl;
-    delay(80);
-  }
   
+  if (!digitalRead(JOYBTNPIN)) { // Joystick button pressed
+    joyTgl = !joyTgl; // Toggle joystick button
+    delay(10); // Debounce delay
+  }
+
+  if (!digitalRead(OVRBTNPIN)) { // Override button pressed
+    ovrTgl = !ovrTgl; // Toggle override mode
+    delay(10); // Debounce delay
+  }
   digitalWrite(OVRLED, ovrTgl);
   digitalWrite(JOYLED, joyTgl);
+  // Prepare data array
+  int data[4] = {joyx, joyy, joyTgl ? 1 : 0, ovrTgl ? 1 : 0};
 
-  // Pack the joystick data into a byte array
-  byte joyData[8];
-  joyData[0] = joyx & 0xFF;          // Lower byte of joyx
-  joyData[1] = (joyx >> 8) & 0xFF;   // Upper byte of joyx
-  joyData[2] = joyy & 0xFF;          // Lower byte of joyy
-  joyData[3] = (joyy >> 8) & 0xFF;   // Upper byte of joyy
-  joyData[4] = joyTgl ? 1 : 0;    // Convert bool to byte
-  joyData[5] = ovrTgl ? 1 : 0;
+  // Send data
+  radio.write(data, sizeof(data));
+  delay(50); // Adjust delay according to your application
 
-
-  
-  // Send the joystick data
-  
-  radio.write(&joyData, sizeof(joyData));
-  delay(100);
-}
-/*
-  // Print joystick data for debugging
   Serial.print("joyx: ");
   Serial.print(joyx);
-  Serial.print(", joyy: ");
+  Serial.print(" | joyy: ");
   Serial.print(joyy);
-  Serial.print(", Toggle: ");
-  Serial.print(ovrTgl);
-  Serial.print(", joystick toggle: ");
-  Serial.println(joyTgl);
-
-  delay(1000); // Adjust delay according to your application
+  Serial.print(" | joyTgl: ");
+  Serial.print(joyTgl);
+  Serial.print(" | manualOverride: ");
+  Serial.println(ovrTgl);
 }
+
+
 */
