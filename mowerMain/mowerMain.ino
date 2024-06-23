@@ -9,7 +9,6 @@ a BSc in mechatronics.
 #include <SPI.h>
 #include <nRF24L01.h>
 #include <RF24.h>
-#include "perimeterSensor.h"
 #include "manualControl.h"
 #include "obstacleAhead.h"
 #include "motorControl.h"
